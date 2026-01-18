@@ -2,44 +2,54 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Loko-overlay</title>
+  <title>Футбольный оверлей</title>
   <style>
     body {
       margin: 0;
-      padding: 20px;
+      padding: 0;
       font-family: 'Arial', sans-serif;
-      background-color: rgba(0, 0, 0, 0.6);
+      background-color: #000;
       color: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top-bar {
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      border-bottom: 2px solid #fff;
+    }
+
+    .team-name {
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .score {
+      font-size: 36px;
+      font-weight: bold;
+      margin: 0 20px;
+    }
+
+    .content {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      box-sizing: border-box;
-      position: relative;
-    }
-    .scoreboard {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 30px;
-      font-size: 48px;
-      margin-bottom: 20px;
-    }
-    .team-name {
-      font-size: 28px;
-      text-align: center;
-      width: 180px;
-    }
-    .score {
-      font-weight: bold;
-      min-width: 80px;
       text-align: center;
     }
+
     .timer {
-      font-size: 36px;
-      margin: 15px 0;
+      font-size: 48px;
+      margin: 20px 0;
     }
+
     .goal-alert {
       position: fixed;
       top: 50%;
@@ -56,6 +66,7 @@
       pointer-events: none;
       z-index: 1000;
     }
+
     .final-screen {
       position: fixed;
       top: 0;
@@ -69,37 +80,35 @@
       justify-content: center;
       z-index: 2000;
     }
+
     .final-score {
       font-size: 64px;
       margin-bottom: 30px;
     }
+
     .final-goals {
       font-size: 24px;
       text-align: left;
       max-width: 600px;
     }
+
     .goal-item {
       margin: 10px 0;
     }
   </style>
 </head>
 <body>
-  <!-- Основной дисплей -->
-  <script>
-  window.name = 'Loko-overlay'; // Точное имя, как в control.html
-</script>
-  <div class="scoreboard">
-    <div class="team-name" id="team1-name">Команда 1</div>
+  <div class="top-bar">
+    <div class="team-name" id="team1-name" onclick="openControlPanel()">Команда 1</div>
     <div class="score" id="score">0 : 0</div>
     <div class="team-name" id="team2-name">Команда 2</div>
   </div>
 
-  <div class="timer" id="timer">00:00</div>
+  <div class="content">
+    <div class="timer" id="timer">00:00</div>
+  </div>
 
-  <!-- Оповещение о голе (появляется на 20 сек) -->
   <div class="goal-alert" id="goal-alert"></div>
-
-  <!-- Финальный экран -->
   <div class="final-screen" id="final-screen">
     <div class="final-score" id="final-score"></div>
     <div class="final-goals" id="final-goals"></div>
@@ -120,32 +129,67 @@
     let score = { team1: 0, team2: 0 };
     let timerSeconds = 0;
     let isMatchEnded = false;
-    const goals = []; // Список всех голов
+    const goals = [];
+
+    // Ключи для localStorage
+    const SCORE_KEY = 'football_score';
+    const TIMER_KEY = 'football_timer';
+    const GOALS_KEY = 'football_goals';
+    const TEAMS_KEY = 'football_teams';
+
+    // Загрузка данных из localStorage при старте
+    function loadFromStorage() {
+      const storedScore = localStorage.getItem(SCORE_KEY);
+      if (storedScore) score = JSON.parse(storedScore);
+
+      const storedTimer = localStorage.getItem(TIMER_KEY);
+      if (storedTimer) timerSeconds = parseInt(storedTimer, 10);
+
+      const storedGoals = localStorage.getItem(GOALS_KEY);
+      if (storedGoals) goals.push(...JSON.parse(storedGoals));
+
+      const storedTeams = localStorage.getItem(TEAMS_KEY);
+      if (storedTeams) {
+        const teams = JSON.parse(storedTeams);
+        team1NameEl.textContent = teams.team1;
+        team2NameEl.textContent = teams.team2;
+      }
+    }
+     // Сохранение данных в localStorage
+    function saveToStorage() {
+      localStorage.setItem(SCORE_KEY, JSON.stringify(score));
+      localStorage.setItem(TIMER_KEY, timerSeconds.toString());
+      localStorage.setItem(GOALS_KEY, JSON.stringify(goals));
+      localStorage.setItem(TEAMS_KEY, JSON.stringify({
+        team1: team1NameEl.textContent,
+        team2: team2NameEl.textContent
+      }));
+    }
 
     // Обновление отображения
     function render() {
       scoreEl.textContent = `${score.team1} : ${score.team2}`;
-      
+
       const min = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
       const sec = (timerSeconds % 60).toString().padStart(2, '0');
       timerEl.textContent = `${min}:${sec}`;
     }
 
-    // Показать автора гола на 20 сек
+    // Показать автора гола
     function showGoalAlert(player, minute) {
       goalAlert.textContent = `⚽ ${player} (${minute}')`;
       goalAlert.style.opacity = 1;
-      
+
       setTimeout(() => {
         goalAlert.style.opacity = 0;
-      }, 20000); // 20 секунд
+      }, 20000);
     }
 
     // Показать финальный экран
     function showFinalScreen() {
       isMatchEnded = true;
       finalScore.textContent = `Итоговый счёт: ${score.team1} : ${score.team2}`;
-      
+
       finalGoals.innerHTML = '';
       goals.forEach(goal => {
         const item = document.createElement('div');
@@ -153,40 +197,82 @@
         item.textContent = `• ${goal.player} (${goal.minute}') — ${goal.team}`;
         finalGoals.appendChild(item);
       });
-      
+
       finalScreen.style.display = 'flex';
     }
 
-    // Обработка сообщений от панели управления
+    // Открытие панели управления
+    function openControlPanel() {
+      const width = 400;
+      const height = 600;
+      const left = (screen.width - width) / 2;
+      const top = (screen.height - height) / 2;
+
+      window.open(
+        'control.html',
+        'controlPanel',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+    }
+
+    // Обработчик сообщений
     window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+
       const data = event.data;
 
-      if (data.type === 'update-teams') {
-        team1NameEl.textContent = data.team1;
-        team2NameEl.textContent = data.team2;
-      }
+      switch (data.type) {
+        case 'update-teams':
+          team1NameEl.textContent = data.team1;
+          team2NameEl.
+             team2NameEl.textContent = data.team2;
+        saveToStorage();
+        break;
 
-      if (data.type === 'update-score') {
+      case 'update-score':
         score = data.score;
         render();
-      }
+        saveToStorage();
+        break;
 
-      if (data.type === 'add-goal') {
+      case 'add-goal':
         goals.push(data.goal);
         showGoalAlert(data.goal.player, data.goal.minute);
-      }
+        saveToStorage();
+        break;
 
-      if (data.type === 'update-timer') {
+      case 'update-timer':
         timerSeconds = data.seconds;
         if (!isMatchEnded) render();
-      }
+        saveToStorage();
+        break;
 
-      if (data.type === 'match-ended') {
+      case 'match-ended':
+        isMatchEnded = true;
         showFinalScreen();
+        saveToStorage();
+        break;
+
+      case 'request-initial-data':
+        // Ответ оверлея на запрос начальных данных от панели управления
+        event.source.postMessage({
+          type: 'initial-data',
+          score: score,
+          timerSeconds: timerSeconds,
+          teams: {
+            team1: team1NameEl.textContent,
+            team2: team2NameEl.textContent
+          }
+        }, event.origin);
+        break;
       }
+    });
+
+    // Инициализация при загрузке страницы
+    window.addEventListener('load', () => {
+      loadFromStorage();
+      render();
     });
   </script>
 </body>
-
 </html>
-
