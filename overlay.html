@@ -214,18 +214,41 @@
     }
 
     // Открытие панели управления
-    function openControlPanel() {
-      const width = 400;
-      const height = 600;
-      const left = (screen.width - width) / 2;
-      const top = (screen.height - height) / 2;
+   function openControlPanel() {
+  const width = 400;
+  const height = 600;
+  const left = (screen.width - width) / 2;
+  const top = (screen.height - height) / 2;
 
 
-      window.open(
-        'control.html',
-        'controlPanel',
-        `width=${width},height=${height},left=${left},top=${top}`
-         }
+  // Пытаемся открыть панель
+  const panel = window.open(
+    'control.html',
+    'controlPanel',
+    `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+  );
+
+  // Проверяем, удалось ли открыть окно
+  if (!panel) {
+    alert('Не удалось открыть панель управления!\n1. Разрешите всплывающие окна в браузере.\n2. Откройте оверлей в новой вкладке.');
+    return;
+  }
+
+  // Ждём загрузки панели и отправляем начальные данные
+  panel.addEventListener('load', () => {
+    panel.postMessage({
+      type: 'init-from-overlay',
+      data: {
+        score: score,
+        timerSeconds: timerSeconds,
+        teams: {
+          team1: team1NameEl.textContent,
+          team2: team2NameEl.textContent
+        }
+      }
+    }, window.location.origin);
+  }, { once: true });
+}
 
     // Обработчик сообщений
     window.addEventListener('message', (event) => {
@@ -287,3 +310,4 @@
   </script>
 </body>
 </html>
+
