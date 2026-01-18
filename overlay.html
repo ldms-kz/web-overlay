@@ -8,7 +8,7 @@
       margin: 0;
       padding: 0;
       font-family: 'Arial', sans-serif;
-      background-color: #000;
+      background-color: transparent; /* Полностью прозрачный фон */
       color: white;
       height: 100vh;
       display: flex;
@@ -16,12 +16,12 @@
     }
 
     .top-bar {
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.7); /* Полупрозрачная тёмная плашка */
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 10px 20px;
-      border-bottom: 2px solid #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     .team-name {
@@ -30,10 +30,23 @@
       cursor: pointer;
     }
 
+    .score-timer-container {
+      display: flex;
+      align-items: center;
+      gap: 15px; /* Отступ между счётом и таймером */
+    }
+
     .score {
       font-size: 36px;
       font-weight: bold;
-      margin: 0 20px;
+      margin: 0;
+    }
+
+    .timer {
+      font-size: 32px; /* Чуть меньше, чем счёт */
+      color: #ffcc00; /* Золотистый цвет для таймера */
+      font-weight: 500;
+      margin: 0;
     }
 
     .content {
@@ -43,11 +56,6 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-    }
-
-    .timer {
-      font-size: 48px;
-      margin: 20px 0;
     }
 
     .goal-alert {
@@ -100,19 +108,22 @@
 <body>
   <div class="top-bar">
     <div class="team-name" id="team1-name" onclick="openControlPanel()">Команда 1</div>
-    <div class="score" id="score">0 : 0</div>
+    <div class="score-timer-container">
+      <div class="score" id="score">0 : 0</div>
+      <div class="timer" id="timer">00:00</div>
+    </div>
     <div class="team-name" id="team2-name">Команда 2</div>
   </div>
 
-  <div class="content">
-    <div class="timer" id="timer">00:00</div>
-  </div>
+
+  <div class="content"></div>
 
   <div class="goal-alert" id="goal-alert"></div>
   <div class="final-screen" id="final-screen">
     <div class="final-score" id="final-score"></div>
     <div class="final-goals" id="final-goals"></div>
   </div>
+
 
   <script>
     // Элементы DOM
@@ -137,7 +148,7 @@
     const GOALS_KEY = 'football_goals';
     const TEAMS_KEY = 'football_teams';
 
-    // Загрузка данных из localStorage при старте
+    // Загрузка данных из localStorage
     function loadFromStorage() {
       const storedScore = localStorage.getItem(SCORE_KEY);
       if (storedScore) score = JSON.parse(storedScore);
@@ -155,7 +166,8 @@
         team2NameEl.textContent = teams.team2;
       }
     }
-     // Сохранение данных в localStorage
+
+    // Сохранение данных в localStorage
     function saveToStorage() {
       localStorage.setItem(SCORE_KEY, JSON.stringify(score));
       localStorage.setItem(TIMER_KEY, timerSeconds.toString());
@@ -208,12 +220,12 @@
       const left = (screen.width - width) / 2;
       const top = (screen.height - height) / 2;
 
+
       window.open(
         'control.html',
         'controlPanel',
         `width=${width},height=${height},left=${left},top=${top}`
-      );
-    }
+         }
 
     // Обработчик сообщений
     window.addEventListener('message', (event) => {
@@ -224,47 +236,46 @@
       switch (data.type) {
         case 'update-teams':
           team1NameEl.textContent = data.team1;
-          team2NameEl.
-             team2NameEl.textContent = data.team2;
-        saveToStorage();
-        break;
+          team2NameEl.textContent = data.team2;
+          saveToStorage();
+          break;
 
-      case 'update-score':
-        score = data.score;
-        render();
-        saveToStorage();
-        break;
+        case 'update-score':
+          score = data.score;
+          render();
+          saveToStorage();
+          break;
 
-      case 'add-goal':
-        goals.push(data.goal);
-        showGoalAlert(data.goal.player, data.goal.minute);
-        saveToStorage();
-        break;
+        case 'add-goal':
+          goals.push(data.goal);
+          showGoalAlert(data.goal.player, data.goal.minute);
+          saveToStorage();
+          break;
 
-      case 'update-timer':
-        timerSeconds = data.seconds;
-        if (!isMatchEnded) render();
-        saveToStorage();
-        break;
+        case 'update-timer':
+          timerSeconds = data.seconds;
+          if (!isMatchEnded) render();
+          saveToStorage();
+          break;
 
-      case 'match-ended':
-        isMatchEnded = true;
-        showFinalScreen();
-        saveToStorage();
-        break;
+        case 'match-ended':
+          isMatchEnded = true;
+          showFinalScreen();
+          saveToStorage();
+          break;
 
-      case 'request-initial-data':
-        // Ответ оверлея на запрос начальных данных от панели управления
-        event.source.postMessage({
-          type: 'initial-data',
-          score: score,
-          timerSeconds: timerSeconds,
-          teams: {
-            team1: team1NameEl.textContent,
-            team2: team2NameEl.textContent
-          }
-        }, event.origin);
-        break;
+        case 'request-initial-data':
+          // Ответ оверлея на запрос начальных данных от панели управления
+          event.source.postMessage({
+            type: 'initial-data',
+            score: score,
+            timerSeconds: timerSeconds,
+            teams: {
+              team1: team1NameEl.textContent,
+              team2: team2NameEl.textContent
+            }
+          }, event.origin);
+          break;
       }
     });
 
