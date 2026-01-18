@@ -124,10 +124,15 @@
     let isRunning = false;
 
     // Функция отправки сообщений в оверлей
-    function sendToOverlay(data) {
-      const overlayWindow = window.open('', '_blank');
-      overlayWindow.postMessage(data, '*');
-    }
+   function sendToOverlay(data) {
+  // Получаем все открытые окна (включая оверлей)
+  const windows = window.open('', '_name_of_overlay');
+  if (windows) {
+    windows.postMessage(data, window.location.origin);
+  } else {
+    console.error('Оверлей не открыт!');
+  }
+}
 
     // Обновление названий команд
     function updateTeams() {
@@ -232,4 +237,5 @@
     updateTimerDisplay();
   </script>
 </body>
+
 </html>
