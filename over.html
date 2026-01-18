@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Футбольный оверлей</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
+      background-color: #000;
+      color: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Верхняя панель (счёт и названия команд) */
+    .top-bar {
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      border-bottom: 2px solid #fff;
+    }
+
+    .team-name {
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer; /* Чтобы было видно, что можно кликнуть */
+    }
+
+    .score {
+      font-size: 36px;
+      font-weight: bold;
+      margin: 0 20px;
+    }
+
+    /* Основной контент (таймер, оповещения) */
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .timer {
+      font-size: 48px;
+      margin: 20px 0;
+    }
+
+    .goal-alert {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(255, 215, 0, 0.9);
+      color: black;
+      padding: 20px 40px;
+      border-radius: 10px;
+      font-size: 32px;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.5s;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* Финальный экран */
+    .final-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.95);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    .final-score {
+      font-size: 64px;
+      margin-bottom: 30px;
+    }
+
+    .final-goals {
+      font-size: 24px;
+      text-align: left;
+      max-width: 600px;
+    }
+
+    .goal-item {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Верхняя панель: счёт и названия команд -->
+  <div class="top-bar">
+    <div class="team-name" id="team1-name" onclick="openControlPanel()">Команда 1</div>
+    <div class="score" id="score">0 : 0</div>
+    <div class="team-name" id="team2-name">Команда 2</div>
+  </div>
+
+  <!-- Основной контент -->
+  <div class="content">
+    <div class="timer" id="timer">00:00</div>
+  </div>
+
+  <!-- Оповещение о голе -->
+  <div class="goal-alert" id="goal-alert"></div>
+
+
+  <!-- Финальный экран -->
+  <div class="final-screen" id="final-screen">
+    <div class="final-score" id="final-score"></div>
+    <div class="final-goals" id="final-goals"></div>
+  </div>
+
+  <script>
+    // Элементы DOM
+    const team1NameEl = document.getElementById('team1-name');
+    const team2NameEl = document.getElementById('team2-name');
+    const scoreEl = document.getElementById('score');
+    const timerEl = document.getElementById('timer');
+    const goalAlert = document.getElementById('goal-alert');
+    const finalScreen = document.getElementById('final-screen');
+    const finalScore = document.getElementById('final-score');
+    const finalGoals = document.getElementById('final-goals');
+
+    // Данные
+    let score = { team1: 0, team2: 0 };
+    let timerSeconds = 0;
+    let isMatchEnded = false;
+    const goals = [];
+
+    // Открытие панели управления
+    function openControlPanel() {
+      const width = 400;
+      const height = 600;
+      const left = (screen.width - width) / 2;
+      const top = (screen.height - height) / 2;
+
+      window.open(
+        'control.html',
+        'controlPanel',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+    }
+
+    // Обновление отображения
+    function render() {
+      scoreEl.textContent = `${score.team1} : ${score.team2}`;
+
+      const min = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+      const sec = (timerSeconds % 60).toString().padStart(2, '0');
+      timerEl.textContent = `${min}:${sec}`;
+    }
+
+    // Показать автора гола на 20 сек
+    function showGoalAlert(player, minute) {
+      goalAlert.textContent = `⚽ ${player} (${minute}')`;
+      goalAlert.style.opacity = 1;
+
+      setTimeout(() => {
+        goalAlert.style.opacity = 0;
+      }, 20000);
+    }
+
+    // Показать финальный экран
+    function showFinalScreen() {
+      isMatchEnded = true;
+      finalScore.textContent = `Итоговый счёт: ${score.team1} : ${score.team2}`;
+
+      finalGoals.innerHTML = '';
+      goals.forEach(goal => {
+        const item = document.createElement('div');
+        item.className = 'goal-item';
+        item.textContent = `• ${goal.player} (${goal.minute}') — ${goal.team}`;
+        finalGoals.appendChild(item);
+      });
+
+      finalScreen.style.display = 'flex';
+    }
+
+    // Обработчик сообщений из control.html
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+
+      const data = event.data;
+
+      if (data.type === 'update-teams') {
+        team1NameEl.textContent = data.team1;
+        team2NameEl.textContent = data.team2;
+      }
+
+      if (data.type === 'update-score') {
+        score = data.score;
+        render();
+      }
+
+      if (data.type === 'add-goal') {
+        goals.push(data.goal);
+        showGoalAlert(data.goal.player, data.goal.minute);
+      }
+
+      if (data.type === 'update-timer') {
+        timerSeconds = data.seconds;
+        if (!isMatchEnded) render();
+      }
+
+      if (data.type === 'match-ended') {
+        showFinalScreen();
+      }
+    });
+  </script>
+</body>
+</html>
