@@ -126,7 +126,7 @@
     // Функция отправки сообщений в оверлей
    function sendToOverlay(data) {
   // Получаем все открытые окна (включая оверлей)
-  const windows = window.open('', '_name_of_overlay');
+  const windows = window.open('', 'Loko-overlay');
   if (windows) {
     windows.postMessage(data, window.location.origin);
   } else {
@@ -239,3 +239,4 @@
 </body>
 
 </html>
+
