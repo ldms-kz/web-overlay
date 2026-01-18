@@ -68,6 +68,41 @@
       localStorage.setItem(TIMER_KEY, timerSeconds.toString());
     }
 
+// Обработчик сообщений от оверлея (включая инициализацию)
+window.addEventListener('message', (event) => {
+  if (event.origin !== window.location.origin) return;
+
+
+  const data = event.data;
+
+  if (data.type === 'init-from-overlay') {
+    // Инициализируем данные из оверлея
+    score = data.data.score;
+    timerSeconds = data.data.timerSeconds;
+
+
+    document.getElementById('team1-input').value = data.data.teams.team1;
+    document.getElementById('team2-input').value = data.data.teams.team2;
+
+
+    updateTimerDisplay();
+    document.getElementById('score-display').textContent = 
+      `${score.team1} : ${score.team2}`;
+
+
+    console.log('Панель инициализирована данными из оверлея');
+    return;
+  }
+
+  // Остальные обработчики (как в исходном коде)
+  if (data.type === 'initial-data') {
+    score = data.score || { team1: 0, team2: 0 };
+    timerSeconds = data.timerSeconds || 0;
+
+    // ... (остальной код синхронизации)
+  }
+});
+    
     // Отправка сообщений в оверлей
     function sendToOverlay(data) {
       if (!overlayWindow) {
@@ -176,3 +211,4 @@
   </script>
 </body>
 </html>
+
