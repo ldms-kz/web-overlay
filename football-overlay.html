@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Футбольный оверлей</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Arial', sans-serif;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      box-sizing: border-box;
+    }
+    .scoreboard {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+    .team-name {
+      font-size: 24px;
+      text-align: center;
+      width: 120px;
+    }
+    .score {
+      font-weight: bold;
+      min-width: 60px;
+      text-align: center;
+    }
+    .timer {
+      font-size: 36px;
+      margin: 10px 0;
+    }
+    .goals {
+      font-size: 20px;
+      text-align: left;
+      max-width: 400px;
+      margin-top: 20px;
+    }
+    .goal-item {
+      margin: 5px 0;
+    }
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 400px;
+    }
+    input, button {
+      padding: 8px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div class="scoreboard">
+    <div class="team-name" id="team1-name">Команда 1</div>
+    <div class="score" id="score">0 : 0</div>
+    <div class="team-name" id="team2-name">Команда 2</div>
+  </div>
+
+  <div class="timer" id="timer">00:00</div>
+
+  <div class="goals" id="goals-list">
+    <!-- Здесь будут отображаться голы -->
+  </div>
+
+  <div class="controls">
+    <input type="text" id="team1-input" placeholder="Название команды 1" />
+    <input type="text" id="team2-input" placeholder="Название команды 2" />
+    <button onclick="updateTeamNames()">Обновить названия</button>
+
+    <div>
+      <input type="number" id="goal-minute" placeholder="Минута" min="0" max="60" />
+      <input type="text" id="player-name" placeholder="Фамилия игрока" />
+      <button onclick="addGoal()">Добавить гол</button>
+    </div>
+
+    <div>
+      <button onclick="incrementTeam1()">+1 к команде 1</button>
+      <button onclick="incrementTeam2()">+1 к команде 2</button>
+    </div>
+
+    <div>
+      <button onclick="resetTimer()">Сбросить таймер</button>
+      <button onclick="startTimer()">Запустить таймер</button>
+    </div>
+  </div>
+
+  <script>
+    let timerInterval;
+    let currentTime = 0; // секунды
+    let isRunning = false;
+
+    const timerElement = document.getElementById('timer');
+    const scoreElement = document.getElementById('score');
+    const goalsList = document.getElementById('goals-list');
+
+    let score = { team1: 0, team2: 0 };
+
+    // Обновление таймера
+    function updateTimer() {
+      if (currentTime >= 1800) { // 30 минут = 1800 секунд
+        clearInterval(timerInterval);
+        isRunning = false;
+        timerElement.textContent = '30:00 (1‑й тайм окончен)';
+        return;
+      }
+
+      const minutes = Math.floor(currentTime / 60).toString().padStart(2, '0');
+      const seconds = (currentTime % 60).toString().padStart(2, '0');
+      timerElement.textContent = `${minutes}:${seconds}`;
+      currentTime++;
+    }
+
+    // Запуск таймера
+    function startTimer() {
+      if (isRunning) return;
+      isRunning = true;
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    // Сброс таймера
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      currentTime = 0;
+      timerElement.textContent = '00:00';
+    }
+
+    // Увеличение счёта
+    function incrementTeam1() {
+      score.team1++;
+      scoreElement.textContent = `${score.team1} : ${score.team2}`;
+    }
+
+    function incrementTeam2() {
+      score.team2++;
+      scoreElement.textContent = `${score.team1} : ${score.team2}`;
+    }
+
+    // Обновление названий команд
+    function updateTeamNames() {
+      const team1Input = document.getElementById('team1-input').value;
+      const team2Input = document.getElementById('team2-input').value;
+
+      if (team1Input) document.getElementById('team1-name').textContent = team1Input;
+      if (team2Input) document.getElementById('team2-name').textContent = team2Input;
+    }
+
+    // Добавление гола
+    function addGoal() {
+      const minute = document.getElementById('goal-minute').value;
+      const player = document.getElementById('player-name').value;
+
+      if (!minute || !player) {
+        alert('Заполните минуту и фамилию игрока!');
+        return;
+      }
+
+      const goalItem = document.createElement('div');
+      goalItem.className = 'goal-item';
+      goalItem.textContent = `⚽ ${player} (${minute}')`;
+      goalsList.appendChild(goalItem);
+
+      // Очищаем поля
+      document.getElementById('goal-minute').value = '';
+      document.getElementById('player-name').value = '';
+    }
+  </script>
+</body>
+</html>
